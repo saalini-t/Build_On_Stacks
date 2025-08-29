@@ -1,41 +1,79 @@
-import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import ProjectMap3D from "@/components/ProjectMap3D";
-import SensorReadings from "@/components/SensorReadings";
+import { SensorReadings } from "@/components/SensorReadings";
+import { ContractTester } from "@/components/ContractTester";
 import { Building2, CheckCircle, Leaf, DollarSign } from "lucide-react";
 
 export default function Dashboard() {
-  const { data: projectStats, isLoading: statsLoading } = useQuery({
-    queryKey: ["/api/analytics/projects"],
-  }) as { data: any, isLoading: boolean };
+  // Mock data instead of API calls
+  const projectStats = {
+    totalProjects: 12,
+    creditsIssued: 1250,
+    co2Sequestered: 156.7
+  };
 
-  const { data: marketStats, isLoading: marketLoading } = useQuery({
-    queryKey: ["/api/analytics/market"],
-  }) as { data: any, isLoading: boolean };
+  const marketStats = {
+    marketValue: 12500
+  };
 
-  const { data: projects, isLoading: projectsLoading } = useQuery({
-    queryKey: ["/api/projects"],
-  }) as { data: any[], isLoading: boolean };
+  const projects = [
+    { 
+      id: "1", 
+      area: "50 hectares",
+      name: "Mangrove Restoration", 
+      description: "Coastal mangrove restoration project",
+      projectType: "Mangrove",
+      latitude: "19.0760",
+      longitude: "72.8777",
+      location: "Mumbai, India",
+      developerId: "dev1",
+      status: "active",
+      estimatedCredits: 500,
+      verificationDocuments: [],
+      satelliteImagery: [],
+      createdAt: new Date(),
+      verifiedAt: new Date(),
+      ownerId: "owner1"
+    },
+    { 
+      id: "2", 
+      area: "30 hectares",
+      name: "Seagrass Conservation", 
+      description: "Seagrass bed protection initiative",
+      projectType: "Seagrass",
+      latitude: "15.2993",
+      longitude: "74.1240",
+      location: "Goa, India",
+      developerId: "dev2",
+      status: "active",
+      estimatedCredits: 300,
+      verificationDocuments: [],
+      satelliteImagery: [],
+      createdAt: new Date(),
+      verifiedAt: new Date(),
+      ownerId: "owner2"
+    },
+    { 
+      id: "3", 
+      area: "25 hectares",
+      name: "Salt Marsh Protection", 
+      description: "Salt marsh ecosystem conservation",
+      projectType: "Salt Marsh",
+      latitude: "10.8505",
+      longitude: "76.2711",
+      location: "Kerala, India",
+      developerId: "dev3",
+      status: "active",
+      estimatedCredits: 250,
+      verificationDocuments: [],
+      satelliteImagery: [],
+      createdAt: new Date(),
+      verifiedAt: new Date(),
+      ownerId: "owner3"
+    }
+  ];
 
-  if (statsLoading || marketLoading || projectsLoading) {
-    return (
-      <div className="space-y-8">
-        <div className="animate-pulse">
-          <div className="h-8 bg-muted rounded w-1/3 mb-2"></div>
-          <div className="h-4 bg-muted rounded w-2/3"></div>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {[...Array(4)].map((_, i) => (
-            <Card key={i} className="animate-pulse">
-              <CardContent className="pt-6">
-                <div className="h-16 bg-muted rounded"></div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
-    );
-  }
+    // No loading states needed with mock data
 
   return (
     <div className="space-y-8">
@@ -130,7 +168,7 @@ export default function Dashboard() {
             <p className="text-sm text-muted-foreground">Real-time IoT data from project sites</p>
           </CardHeader>
           <CardContent>
-            <SensorReadings projectId="project-1" />
+            <SensorReadings />
           </CardContent>
         </Card>
       </div>
@@ -196,6 +234,9 @@ export default function Dashboard() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Real Blockchain Contract Tester */}
+      <ContractTester />
     </div>
   );
 }

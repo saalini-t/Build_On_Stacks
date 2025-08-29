@@ -1,5 +1,12 @@
 import type { Project, CarbonCredit, Transaction, SensorData } from "@shared/schema";
 
+// Real Stacks testnet addresses for testing
+export const STACKS_ADDRESSES = {
+  USER_1: "ST2AS2J9GZK2FDSCB6J4450G45DV7WNVY9W3V0342", // Your address
+  USER_2: "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM", // Test address
+  USER_3: "ST3AM1A56AK2C58XAPYF5WQCVW8KFZXK8W5KAD4FQ", // Test address
+};
+
 export const mockProjects: Project[] = [
   {
     id: "project-1",
@@ -10,7 +17,7 @@ export const mockProjects: Project[] = [
     latitude: "11.0168",
     longitude: "76.9558", 
     location: "Kochi, Kerala, India",
-    developerId: "user-1",
+    developerId: STACKS_ADDRESSES.USER_1, // Your address
     status: "verified",
     estimatedCredits: 125,
     verificationDocuments: {
@@ -35,7 +42,7 @@ export const mockProjects: Project[] = [
     latitude: "15.2993",
     longitude: "74.1240",
     location: "Panaji, Goa, India", 
-    developerId: "user-1",
+    developerId: STACKS_ADDRESSES.USER_1, // Your address
     status: "verified",
     estimatedCredits: 78,
     verificationDocuments: {
@@ -60,7 +67,7 @@ export const mockProjects: Project[] = [
     latitude: "21.9497",
     longitude: "89.1833",
     location: "West Bengal, India",
-    developerId: "user-1",
+    developerId: STACKS_ADDRESSES.USER_1, // Your address
     status: "verified",
     estimatedCredits: 203,
     verificationDocuments: {
@@ -85,7 +92,7 @@ export const mockProjects: Project[] = [
     latitude: "13.0827",
     longitude: "80.2707",
     location: "Chennai, Tamil Nadu, India",
-    developerId: "user-1", 
+    developerId: STACKS_ADDRESSES.USER_2, // Test address
     status: "pending",
     estimatedCredits: 280,
     verificationDocuments: {
@@ -110,7 +117,7 @@ export const mockCarbonCredits: CarbonCredit[] = [
     tokenId: "BCR-001-125",
     amount: 125,
     price: "17.50",
-    ownerId: "user-1",
+    ownerId: STACKS_ADDRESSES.USER_1, // Your address
     status: "available",
     co2Amount: "1.0",
     mintedAt: new Date("2024-02-01"),
@@ -123,7 +130,7 @@ export const mockCarbonCredits: CarbonCredit[] = [
     tokenId: "BCR-002-078",
     amount: 78,
     price: "19.25",
-    ownerId: "user-1", 
+    ownerId: STACKS_ADDRESSES.USER_1, // Your address
     status: "available",
     co2Amount: "1.0",
     mintedAt: new Date("2024-02-25"),
@@ -136,7 +143,7 @@ export const mockCarbonCredits: CarbonCredit[] = [
     tokenId: "BCR-003-203",
     amount: 203,
     price: "16.75",
-    ownerId: "user-1",
+    ownerId: STACKS_ADDRESSES.USER_1, // Your address
     status: "available", 
     co2Amount: "1.0",
     mintedAt: new Date("2024-01-20"),
@@ -150,24 +157,24 @@ export const mockTransactions: Transaction[] = [
     id: "tx-1",
     type: "purchase",
     creditId: "credit-1", 
-    fromUserId: null,
-    toUserId: "user-2",
+    fromUserId: STACKS_ADDRESSES.USER_1, // Your address
+    toUserId: STACKS_ADDRESSES.USER_2, // Test address
     amount: 25,
     price: "17.50",
     txHash: "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef12",
-    blockchainNetwork: "ethereum",
+    blockchainNetwork: "stacks",
     createdAt: new Date("2024-03-15T10:30:00Z")
   },
   {
     id: "tx-2",
     type: "retirement",
     creditId: "credit-2",
-    fromUserId: "user-2", 
+    fromUserId: STACKS_ADDRESSES.USER_2, // Test address
     toUserId: null,
     amount: 10,
     price: null,
     txHash: "0x2345678901bcdef12345678901bcdef12345678901bcdef12345678901bcdef123",
-    blockchainNetwork: "ethereum",
+    blockchainNetwork: "stacks",
     createdAt: new Date("2024-03-14T15:45:00Z")
   },
   {
@@ -175,11 +182,11 @@ export const mockTransactions: Transaction[] = [
     type: "minting",
     creditId: "credit-1",
     fromUserId: null,
-    toUserId: "user-1",
+    toUserId: STACKS_ADDRESSES.USER_1, // Your address
     amount: 125,
     price: null,
     txHash: "0x3456789012cdef123456789012cdef123456789012cdef123456789012cdef1234",
-    blockchainNetwork: "ethereum", 
+    blockchainNetwork: "stacks", 
     createdAt: new Date("2024-02-01T08:15:00Z")
   }
 ];
@@ -278,25 +285,27 @@ export const API_CONFIG = {
   COPERNICUS_API_KEY: process.env.VITE_COPERNICUS_API_KEY || "your-copernicus-api-key"
 };
 
-// Smart Contract Addresses (testnet/mainnet)
+// Smart Contract Addresses (Stacks testnet)
 export const CONTRACT_ADDRESSES = {
-  BLUE_CARBON_REGISTRY: process.env.VITE_REGISTRY_CONTRACT || "0x742d35Cc6ab008b3C76d3D73fB7c3c6e3c7b0C8C",
-  CARBON_CREDIT_TOKEN: process.env.VITE_TOKEN_CONTRACT || "0x8ba1f109551bD432803012645Hac136c22C28c2",
-  MARKETPLACE: process.env.VITE_MARKETPLACE_CONTRACT || "0x45f123ab89c456def012345678901234567890ab"
+  BLUE_CARBON_REGISTRY: process.env.VITE_REGISTRY_CONTRACT || "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.blue-carbon-registry",
+  CARBON_CREDIT_TOKEN: process.env.VITE_TOKEN_CONTRACT || "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.carbon-credit-token",
+  MARKETPLACE: process.env.VITE_MARKETPLACE_CONTRACT || "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.blue-carbon-marketplace"
 };
 
-// Network configurations 
-export const NETWORK_CONFIG = {
-  1: {
-    name: "Ethereum Mainnet",
-    rpcUrl: API_CONFIG.ETHEREUM_RPC_URL,
-    explorerUrl: "https://etherscan.io",
-    nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 }
+// Stacks network configurations 
+export const STACKS_NETWORK_CONFIG = {
+  testnet: {
+    name: "Stacks Testnet",
+    rpcUrl: "https://api.testnet.hiro.so",
+    explorerUrl: "https://explorer.hiro.so/?chain=testnet",
+    nativeCurrency: { name: "STX", symbol: "STX", decimals: 6 },
+    chainId: "2147483648"
   },
-  137: {
-    name: "Polygon Mainnet", 
-    rpcUrl: API_CONFIG.POLYGON_RPC_URL,
-    explorerUrl: "https://polygonscan.com",
-    nativeCurrency: { name: "MATIC", symbol: "MATIC", decimals: 18 }
+  mainnet: {
+    name: "Stacks Mainnet", 
+    rpcUrl: "https://api.hiro.so",
+    explorerUrl: "https://explorer.hiro.so/",
+    nativeCurrency: { name: "STX", symbol: "STX", decimals: 6 },
+    chainId: "1"
   }
 };

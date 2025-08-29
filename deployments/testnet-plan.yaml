@@ -1,0 +1,23 @@
+---
+id: 1
+name: "Blue Carbon Registry Testnet Deployment"
+network: testnet
+plan:
+  batches:
+    - id: 0
+      transactions:
+        - contract-deploy:
+            contract-name: blue-carbon-registry
+            expected-sender: ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM
+            contract-file: contracts/blue-carbon-registry.clar
+            cost: 1000000
+        - contract-deploy:
+            contract-name: blue-carbon-marketplace
+            expected-sender: ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM
+            contract-file: contracts/blue-carbon-marketplace.clar
+            cost: 1000000
+        - contract-deploy:
+            contract-name: sensor-verification
+            expected-sender: ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM
+            contract-file: contracts/sensor-verification.clar
+            cost: 1000000

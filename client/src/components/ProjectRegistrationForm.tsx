@@ -1,464 +1,312 @@
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation } from "@tanstack/react-query";
-import { queryClient } from "@/lib/queryClient";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
-import { insertProjectSchema } from "@shared/schema";
-import { z } from "zod";
-import { Upload, MapPin, TreePine, Waves, Mountain } from "lucide-react";
+import React, { useState } from 'react';
+import { Button } from './ui/button';
+import { Input } from './ui/input';
+import { Label } from './ui/label';
+import { Textarea } from './ui/textarea';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { useToast } from '../hooks/use-toast';
+import { stacksService } from '../lib/stacks-service';
 
-const formSchema = insertProjectSchema.extend({
-  verificationDocuments: z.object({
-    eia: z.boolean().default(false),
-    baseline: z.boolean().default(false),
-    community: z.boolean().default(false),
-    government: z.boolean().default(false),
-  }),
-  satelliteImagery: z.object({
-    before: z.string().optional(),
-    after: z.string().optional(),
-  }).optional(),
-});
+interface ProjectFormData {
+  name: string;
+  description: string;
+  projectType: string;
+  location: string;
+  latitude: string;
+  longitude: string;
+  area: string;
+  estimatedCredits: number;
+  startDate: string;
+  endDate: string;
+  developerName: string;
+  developerEmail: string;
+  verificationDocuments: string;
+  satelliteImagery: string;
+}
 
-type FormData = z.infer<typeof formSchema>;
+export function ProjectRegistrationForm() {
+  const [formData, setFormData] = useState<ProjectFormData>({
+    name: '',
+    description: '',
+    projectType: '',
+    location: '',
+    latitude: '',
+    longitude: '',
+    area: '',
+    estimatedCredits: 0,
+    startDate: '',
+    endDate: '',
+    developerName: '',
+    developerEmail: '',
+    verificationDocuments: '',
+    satelliteImagery: ''
+  });
 
-const projectTypes = [
-  { value: "mangrove", label: "Mangrove Restoration", icon: TreePine },
-  { value: "seagrass", label: "Seagrass Conservation", icon: Waves },
-  { value: "salt_marsh", label: "Salt Marsh Protection", icon: Mountain },
-  { value: "tidal_wetland", label: "Tidal Wetland Enhancement", icon: TreePine },
-];
-
-export default function ProjectRegistrationForm() {
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
-  const [beforeImage, setBeforeImage] = useState<string | null>(null);
-  const [afterImage, setAfterImage] = useState<string | null>(null);
 
-  const form = useForm<FormData>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      name: "",
-      description: "",
-      projectType: "mangrove",
-      area: "0",
-      latitude: "0",
-      longitude: "0",
-      location: "",
-      developerId: "user-1", // Simulated developer ID
-      estimatedCredits: 0,
-      verificationDocuments: {
-        eia: false,
-        baseline: false,
-        community: false,
-        government: false,
-      },
-      satelliteImagery: {
-        before: "",
-        after: "",
-      },
-    },
-  });
-
-  const submitMutation = useMutation({
-    mutationFn: async (data: FormData) => {
-      const response = await apiRequest("POST", "/api/projects", data);
-      return response.json();
-    },
-    onSuccess: () => {
-      toast({
-        title: "Project Submitted",
-        description: "Your blue carbon project has been submitted for verification.",
-      });
-      form.reset();
-      setBeforeImage(null);
-      setAfterImage(null);
-      queryClient.invalidateQueries({ queryKey: ["/api/projects"] });
-    },
-    onError: () => {
-      toast({
-        title: "Submission Failed",
-        description: "There was an error submitting your project. Please try again.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const handleImageUpload = (file: File, type: "before" | "after") => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const imageUrl = e.target?.result as string;
-      if (type === "before") {
-        setBeforeImage(imageUrl);
-        form.setValue("satelliteImagery.before", file.name);
-      } else {
-        setAfterImage(imageUrl);
-        form.setValue("satelliteImagery.after", file.name);
-      }
-    };
-    reader.readAsDataURL(file);
+  const handleInputChange = (field: keyof ProjectFormData, value: string | number) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
   };
 
-  const onSubmit = (data: FormData) => {
-    submitMutation.mutate(data);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!formData.name || !formData.projectType || !formData.location) {
+      toast({
+        title: "Missing Required Fields",
+        description: "Please fill in all required fields.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      // Submit to blockchain
+      const result = await stacksService.addProject();
+      
+      if (result.success) {
+        toast({
+          title: "Project Registered! 🎉",
+          description: `Project "${formData.name}" has been registered on the blockchain. Project ID: ${result.projectId}`,
+        });
+        
+        // Reset form
+        setFormData({
+          name: '',
+          description: '',
+          projectType: '',
+          location: '',
+          latitude: '',
+          longitude: '',
+          area: '',
+          estimatedCredits: 0,
+          startDate: '',
+          endDate: '',
+          developerName: '',
+          developerEmail: '',
+          verificationDocuments: '',
+          satelliteImagery: ''
+        });
+      } else {
+        toast({
+          title: "Registration Failed",
+          description: result.error || "Failed to register project on blockchain",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Project registration error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to register project. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
-    <Card>
+    <Card className="w-full max-w-4xl mx-auto">
       <CardHeader>
-        <CardTitle className="flex items-center space-x-2">
-          <TreePine className="w-6 h-6 text-primary" />
-          <span>Register New Blue Carbon Project</span>
-        </CardTitle>
-        <p className="text-muted-foreground">
-          Submit your mangrove restoration, seagrass bed, or salt marsh project for verification
-        </p>
+        <CardTitle>🌊 Register Blue Carbon Project</CardTitle>
+        <CardDescription>
+          Submit your blue carbon project for verification and credit generation
+        </CardDescription>
       </CardHeader>
       <CardContent>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* Project Details */}
-              <div className="space-y-6">
-                <FormField
-                  control={form.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Project Name</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="e.g., Coastal Mangrove Restoration - Tamil Nadu"
-                          {...field}
-                          data-testid="input-project-name"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="projectType"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Project Type</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger data-testid="select-project-type">
-                              <SelectValue placeholder="Select project type" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {projectTypes.map((type) => (
-                              <SelectItem key={type.value} value={type.value}>
-                                <div className="flex items-center space-x-2">
-                                  <type.icon className="w-4 h-4" />
-                                  <span>{type.label}</span>
-                                </div>
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="area"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Area (hectares)</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            placeholder="250"
-                            {...field}
-                            data-testid="input-area"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="latitude"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Latitude</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            step="any"
-                            placeholder="11.0168"
-                            {...field}
-                            data-testid="input-latitude"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="longitude"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Longitude</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            step="any"
-                            placeholder="76.9558"
-                            {...field}
-                            data-testid="input-longitude"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <FormField
-                  control={form.control}
-                  name="location"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Location</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="e.g., Kochi, Kerala, India"
-                          {...field}
-                          data-testid="input-location"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="estimatedCredits"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Estimated Credits</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          placeholder="125"
-                          {...field}
-                          onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
-                          value={field.value || 0}
-                          data-testid="input-estimated-credits"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="description"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Project Description</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          rows={4}
-                          placeholder="Describe the project goals, methodology, and expected carbon sequestration outcomes..."
-                          {...field}
-                          data-testid="textarea-description"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              {/* Satellite Imagery and Verification */}
-              <div className="space-y-6">
-                <div>
-                  <h4 className="text-lg font-medium text-foreground mb-4">Satellite Imagery</h4>
-                  
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-foreground mb-2">Before Image</label>
-                      <div className="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-primary transition-colors cursor-pointer">
-                        {beforeImage ? (
-                          <img
-                            src={beforeImage}
-                            alt="Before restoration"
-                            className="w-full h-32 object-cover rounded-md mb-2"
-                          />
-                        ) : (
-                          <div className="h-32 flex items-center justify-center">
-                            <Upload className="w-8 h-8 text-muted-foreground" />
-                          </div>
-                        )}
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) handleImageUpload(file, "before");
-                          }}
-                          className="hidden"
-                          id="before-image"
-                          data-testid="input-before-image"
-                        />
-                        <label htmlFor="before-image" className="cursor-pointer">
-                          <p className="text-xs text-muted-foreground">Upload before image</p>
-                        </label>
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <label className="block text-sm font-medium text-foreground mb-2">After Image</label>
-                      <div className="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-primary transition-colors cursor-pointer">
-                        {afterImage ? (
-                          <img
-                            src={afterImage}
-                            alt="After restoration"
-                            className="w-full h-32 object-cover rounded-md mb-2"
-                          />
-                        ) : (
-                          <div className="h-32 flex items-center justify-center">
-                            <Upload className="w-8 h-8 text-muted-foreground" />
-                          </div>
-                        )}
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) handleImageUpload(file, "after");
-                          }}
-                          className="hidden"
-                          id="after-image"
-                          data-testid="input-after-image"
-                        />
-                        <label htmlFor="after-image" className="cursor-pointer">
-                          <p className="text-xs text-muted-foreground">Upload after image</p>
-                        </label>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <h4 className="text-lg font-medium text-foreground mb-4">Verification Documents</h4>
-                  <div className="space-y-3">
-                    <FormField
-                      control={form.control}
-                      name="verificationDocuments.eia"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                          <FormControl>
-                            <Checkbox
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                              data-testid="checkbox-eia"
-                            />
-                          </FormControl>
-                          <div className="space-y-1 leading-none">
-                            <FormLabel>Environmental Impact Assessment</FormLabel>
-                          </div>
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="verificationDocuments.baseline"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                          <FormControl>
-                            <Checkbox
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                              data-testid="checkbox-baseline"
-                            />
-                          </FormControl>
-                          <div className="space-y-1 leading-none">
-                            <FormLabel>Baseline Carbon Measurements</FormLabel>
-                          </div>
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="verificationDocuments.community"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                          <FormControl>
-                            <Checkbox
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                              data-testid="checkbox-community"
-                            />
-                          </FormControl>
-                          <div className="space-y-1 leading-none">
-                            <FormLabel>Local Community Agreements</FormLabel>
-                          </div>
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="verificationDocuments.government"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                          <FormControl>
-                            <Checkbox
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                              data-testid="checkbox-government"
-                            />
-                          </FormControl>
-                          <div className="space-y-1 leading-none">
-                            <FormLabel>Government Approvals</FormLabel>
-                          </div>
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                </div>
-
-                <Button
-                  type="submit"
-                  className="w-full"
-                  disabled={submitMutation.isPending}
-                  data-testid="button-submit-project"
-                >
-                  {submitMutation.isPending ? "Submitting..." : "Submit Project for Verification"}
-                </Button>
-              </div>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Basic Project Information */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Project Name *</Label>
+              <Input
+                id="name"
+                value={formData.name}
+                onChange={(e) => handleInputChange('name', e.target.value)}
+                placeholder="Mangrove Restoration Project"
+                required
+              />
             </div>
-          </form>
-        </Form>
+            
+            <div className="space-y-2">
+              <Label htmlFor="projectType">Project Type *</Label>
+              <Select value={formData.projectType} onValueChange={(value) => handleInputChange('projectType', value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select project type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="mangrove">Mangrove Restoration</SelectItem>
+                  <SelectItem value="seagrass">Seagrass Conservation</SelectItem>
+                  <SelectItem value="saltmarsh">Salt Marsh Protection</SelectItem>
+                  <SelectItem value="kelp">Kelp Forest Restoration</SelectItem>
+                  <SelectItem value="coral">Coral Reef Protection</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="description">Project Description</Label>
+            <Textarea
+              id="description"
+              value={formData.description}
+              onChange={(e) => handleInputChange('description', e.target.value)}
+              placeholder="Describe your project goals, methodology, and expected environmental impact..."
+              rows={4}
+            />
+          </div>
+
+          {/* Location Information */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="location">Location *</Label>
+              <Input
+                id="location"
+                value={formData.location}
+                onChange={(e) => handleInputChange('location', e.target.value)}
+                placeholder="City, Country"
+                required
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="latitude">Latitude</Label>
+              <Input
+                id="latitude"
+                value={formData.latitude}
+                onChange={(e) => handleInputChange('latitude', e.target.value)}
+                placeholder="19.0760"
+                type="number"
+                step="any"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="longitude">Longitude</Label>
+              <Input
+                id="longitude"
+                value={formData.longitude}
+                onChange={(e) => handleInputChange('longitude', e.target.value)}
+                placeholder="72.8777"
+                type="number"
+                step="any"
+              />
+            </div>
+          </div>
+
+          {/* Project Details */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="area">Project Area</Label>
+              <Input
+                id="area"
+                value={formData.area}
+                onChange={(e) => handleInputChange('area', e.target.value)}
+                placeholder="50 hectares"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="estimatedCredits">Estimated Credits</Label>
+              <Input
+                id="estimatedCredits"
+                value={formData.estimatedCredits}
+                onChange={(e) => handleInputChange('estimatedCredits', parseInt(e.target.value) || 0)}
+                placeholder="500"
+                type="number"
+                min="0"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="startDate">Start Date</Label>
+              <Input
+                id="startDate"
+                value={formData.startDate}
+                onChange={(e) => handleInputChange('startDate', e.target.value)}
+                type="date"
+              />
+            </div>
+          </div>
+
+          {/* Developer Information */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="developerName">Developer Name</Label>
+              <Input
+                id="developerName"
+                value={formData.developerName}
+                onChange={(e) => handleInputChange('developerName', e.target.value)}
+                placeholder="Your Name or Organization"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="developerEmail">Developer Email</Label>
+              <Input
+                id="developerEmail"
+                value={formData.developerEmail}
+                onChange={(e) => handleInputChange('developerEmail', e.target.value)}
+                placeholder="developer@example.com"
+                type="email"
+              />
+            </div>
+          </div>
+
+          {/* Documentation */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="verificationDocuments">Verification Documents</Label>
+              <Input
+                id="verificationDocuments"
+                value={formData.verificationDocuments}
+                onChange={(e) => handleInputChange('verificationDocuments', e.target.value)}
+                placeholder="Link to verification documents"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="satelliteImagery">Satellite Imagery</Label>
+              <Input
+                id="satelliteImagery"
+                value={formData.satelliteImagery}
+                onChange={(e) => handleInputChange('satelliteImagery', e.target.value)}
+                placeholder="Link to satellite imagery"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="endDate">Expected Completion Date</Label>
+            <Input
+              id="endDate"
+              value={formData.endDate}
+              onChange={(e) => handleInputChange('endDate', e.target.value)}
+              type="date"
+            />
+          </div>
+
+          <Button 
+            type="submit" 
+            disabled={isSubmitting}
+            className="w-full"
+            size="lg"
+          >
+            {isSubmitting ? "Registering Project..." : "🚀 Register Project on Blockchain"}
+          </Button>
+
+          <div className="text-center text-sm text-gray-500">
+            <p>📋 All projects are verified and audited before credit generation</p>
+            <p>🔒 Your project data is stored securely on the Stacks blockchain</p>
+          </div>
+        </form>
       </CardContent>
     </Card>
   );

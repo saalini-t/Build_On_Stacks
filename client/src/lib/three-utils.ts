@@ -10,10 +10,19 @@ interface ThreeScene {
   markers: THREE.Group;
   controls: any;
   cleanup: () => void;
+  isLoading: boolean;
+  error: string | null;
 }
 
 export function initializeGlobe(container: HTMLElement): ThreeScene {
   try {
+    // Check if WebGL is supported (fallback method)
+    const canvas = document.createElement('canvas');
+    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+    if (!gl) {
+      throw new Error('WebGL is not supported in this browser');
+    }
+
     // Scene setup
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(
@@ -25,59 +34,92 @@ export function initializeGlobe(container: HTMLElement): ThreeScene {
 
     const renderer = new THREE.WebGLRenderer({ 
       antialias: true, 
-      alpha: true 
+      alpha: true,
+      powerPreference: "high-performance"
     });
     renderer.setSize(container.clientWidth, container.clientHeight);
     renderer.setClearColor(0x000000, 0);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     container.appendChild(renderer.domElement);
 
-    // Create globe
+    // Create globe with better materials
     const globeGeometry = new THREE.SphereGeometry(2, 64, 64);
-    const globeMaterial = new THREE.MeshPhongMaterial({
-      color: 0x2563eb,
-      transparent: true,
-      opacity: 0.8,
-      wireframe: false,
-    });
     
-    // Add ocean texture-like appearance
-    const oceanMaterial = new THREE.MeshPhongMaterial({
-      color: 0x0ea5e9,
+    // Create a more realistic Earth-like material
+    const globeMaterial = new THREE.MeshPhongMaterial({
+      color: 0x1e40af, // Blue ocean
       transparent: true,
-      opacity: 0.7,
+      opacity: 0.9,
+      shininess: 100,
     });
 
-    const globe = new THREE.Mesh(globeGeometry, oceanMaterial);
+    const globe = new THREE.Mesh(globeGeometry, globeMaterial);
     scene.add(globe);
 
-    // Add continents as wireframe overlay
-    const continentGeometry = new THREE.SphereGeometry(2.01, 32, 32);
-    const continentMaterial = new THREE.MeshBasicMaterial({
-      color: 0x059669,
+    // Add land masses as overlay
+    const landGeometry = new THREE.SphereGeometry(2.01, 64, 64);
+    const landMaterial = new THREE.MeshBasicMaterial({
+      color: 0x16a34a, // Green land
       transparent: true,
-      opacity: 0.3,
-      wireframe: true,
+      opacity: 0.4,
+      wireframe: false,
     });
-    const continents = new THREE.Mesh(continentGeometry, continentMaterial);
-    scene.add(continents);
+    const land = new THREE.Mesh(landGeometry, landMaterial);
+    scene.add(land);
 
-    // Lighting
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+    // Add atmosphere glow
+    const atmosphereGeometry = new THREE.SphereGeometry(2.2, 32, 32);
+    const atmosphereMaterial = new THREE.MeshBasicMaterial({
+      color: 0x3b82f6,
+      transparent: true,
+      opacity: 0.1,
+      side: THREE.BackSide,
+    });
+    const atmosphere = new THREE.Mesh(atmosphereGeometry, atmosphereMaterial);
+    scene.add(atmosphere);
+
+    // Enhanced lighting
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
     scene.add(ambientLight);
 
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 1.0);
     directionalLight.position.set(5, 5, 5);
+    directionalLight.castShadow = true;
     scene.add(directionalLight);
+
+    // Add point light for better marker visibility
+    const pointLight = new THREE.PointLight(0xffffff, 0.5, 10);
+    pointLight.position.set(0, 0, 0);
+    scene.add(pointLight);
 
     // Marker group for projects
     const markers = new THREE.Group();
     scene.add(markers);
 
-    // Camera position
+    // Camera position and controls
     camera.position.z = 6;
     camera.position.y = 2;
     camera.position.x = 2;
     camera.lookAt(0, 0, 0);
+
+    // Add OrbitControls for better interaction
+    let controls: any = null;
+    try {
+      // Try to import OrbitControls if available
+      import('three/examples/jsm/controls/OrbitControls.js').then(({ OrbitControls }) => {
+        controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.enableZoom = true;
+        controls.enablePan = false;
+        controls.autoRotate = true;
+        controls.autoRotateSpeed = 0.5;
+      }).catch(() => {
+        console.log('OrbitControls not available, using basic controls');
+      });
+    } catch (error) {
+      console.log('Using fallback mouse controls');
+    }
 
     // Animation loop
     let animationId: number;
@@ -85,9 +127,15 @@ export function initializeGlobe(container: HTMLElement): ThreeScene {
       animationId = requestAnimationFrame(animate);
       
       // Rotate globe slowly
-      globe.rotation.y += 0.002;
-      continents.rotation.y += 0.002;
-      markers.rotation.y += 0.002;
+      globe.rotation.y += 0.001;
+      land.rotation.y += 0.001;
+      atmosphere.rotation.y += 0.001;
+      markers.rotation.y += 0.001;
+      
+      // Update controls if available
+      if (controls && controls.update) {
+        controls.update();
+      }
       
       renderer.render(scene, camera);
     };
@@ -105,7 +153,7 @@ export function initializeGlobe(container: HTMLElement): ThreeScene {
     
     window.addEventListener('resize', handleResize);
 
-    // Mouse interaction for rotation control
+    // Enhanced mouse interaction for rotation control
     let mouseDown = false;
     let mouseX = 0;
     let mouseY = 0;
@@ -121,17 +169,17 @@ export function initializeGlobe(container: HTMLElement): ThreeScene {
     };
 
     const handleMouseMove = (event: MouseEvent) => {
-      if (!mouseDown) return;
+      if (!mouseDown || controls) return; // Skip if OrbitControls are active
       
       const deltaX = event.clientX - mouseX;
       const deltaY = event.clientY - mouseY;
       
-      globe.rotation.y += deltaX * 0.01;
-      globe.rotation.x += deltaY * 0.01;
-      continents.rotation.y += deltaX * 0.01;
-      continents.rotation.x += deltaY * 0.01;
-      markers.rotation.y += deltaX * 0.01;
-      markers.rotation.x += deltaY * 0.01;
+      globe.rotation.y += deltaX * 0.005;
+      globe.rotation.x += deltaY * 0.005;
+      land.rotation.y += deltaX * 0.005;
+      land.rotation.x += deltaY * 0.005;
+      markers.rotation.y += deltaX * 0.005;
+      markers.rotation.x += deltaY * 0.005;
       
       mouseX = event.clientX;
       mouseY = event.clientY;
@@ -147,15 +195,22 @@ export function initializeGlobe(container: HTMLElement): ThreeScene {
       renderer,
       globe,
       markers,
-      controls: null,
+      controls,
+      isLoading: false,
+      error: null,
       cleanup: () => {
         cancelAnimationFrame(animationId);
         window.removeEventListener('resize', handleResize);
         container.removeEventListener('mousedown', handleMouseDown);
         container.removeEventListener('mouseup', handleMouseUp);
         container.removeEventListener('mousemove', handleMouseMove);
-        container.removeChild(renderer.domElement);
+        if (container.contains(renderer.domElement)) {
+          container.removeChild(renderer.domElement);
+        }
         renderer.dispose();
+        if (controls && controls.dispose) {
+          controls.dispose();
+        }
       }
     };
   } catch (error) {
@@ -169,6 +224,8 @@ export function initializeGlobe(container: HTMLElement): ThreeScene {
       globe: new THREE.Mesh(),
       markers: new THREE.Group(),
       controls: null,
+      isLoading: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
       cleanup: () => {}
     };
   }

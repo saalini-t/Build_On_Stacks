@@ -1,6 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import WalletConnection from "@/components/WalletConnection";
+import StacksWalletConnection from "@/components/StacksWalletConnection";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -73,7 +73,7 @@ export default function Layout({ children }: LayoutProps) {
             </nav>
             
             <div className="flex items-center space-x-4">
-              <WalletConnection />
+              <StacksWalletConnection />
               <div className="w-8 h-8 bg-muted rounded-full"></div>
             </div>
           </div>

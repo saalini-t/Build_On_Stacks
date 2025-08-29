@@ -1,0 +1,26 @@
+[project]
+name = "blue-carbon-registry"
+description = "Blue Carbon Registry Smart Contracts for Stacks Blockchain"
+authors = ["Blue Carbon Registry Team"]
+telemetry = true
+cache_dir = "./.cache"
+
+[contracts.blue-carbon-registry]
+path = "contracts/blue-carbon-registry.clar"
+depends_on = []
+
+[networks]
+[networks.testnet]
+name = "testnet"
+deployment_dir = "deployments/testnet"
+
+[networks.mainnet]
+name = "mainnet"
+deployment_dir = "deployments/mainnet"
+
+[requirements]
+clarinet = ">=1.0.0"
+
+[repl.analysis]
+passes = ["check_checker"]
+check_checker = { trusted_sender = false, trusted_caller = false, callee_filter = false }

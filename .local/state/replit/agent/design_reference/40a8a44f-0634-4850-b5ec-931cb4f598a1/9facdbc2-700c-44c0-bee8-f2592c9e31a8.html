@@ -1,0 +1,893 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blue Carbon Registry - Blockchain-Based Carbon Credit Platform</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+    tailwind.config = {
+        theme: {
+            extend: {
+                borderRadius: {
+                    lg: "var(--radius)",
+                    md: "calc(var(--radius) - 2px)",
+                    sm: "calc(var(--radius) - 4px)",
+                },
+                colors: {
+                    background: "var(--background)",
+                    foreground: "var(--foreground)",
+                    card: {
+                        DEFAULT: "var(--card)",
+                        foreground: "var(--card-foreground)",
+                    },
+                    popover: {
+                        DEFAULT: "var(--popover)",
+                        foreground: "var(--popover-foreground)",
+                    },
+                    primary: {
+                        DEFAULT: "var(--primary)",
+                        foreground: "var(--primary-foreground)",
+                    },
+                    secondary: {
+                        DEFAULT: "var(--secondary)",
+                        foreground: "var(--secondary-foreground)",
+                    },
+                    muted: {
+                        DEFAULT: "var(--muted)",
+                        foreground: "var(--muted-foreground)",
+                    },
+                    accent: {
+                        DEFAULT: "var(--accent)",
+                        foreground: "var(--accent-foreground)",
+                    },
+                    destructive: {
+                        DEFAULT: "var(--destructive)",
+                        foreground: "var(--destructive-foreground)",
+                    },
+                    border: "var(--border)",
+                    input: "var(--input)",
+                    ring: "var(--ring)",
+                    chart: {
+                        "1": "var(--chart-1)",
+                        "2": "var(--chart-2)",
+                        "3": "var(--chart-3)",
+                        "4": "var(--chart-4)",
+                        "5": "var(--chart-5)",
+                    }
+                },
+                fontFamily: {
+                    sans: ["Inter", "system-ui", "sans-serif"],
+                }
+            },
+        }
+    };
+    </script>
+    <style>
+        :root {
+            --background: hsl(210 40% 98%);
+            --foreground: hsl(222.2 84% 4.9%);
+            --card: hsl(0 0% 100%);
+            --card-foreground: hsl(222.2 84% 4.9%);
+            --popover: hsl(0 0% 100%);
+            --popover-foreground: hsl(222.2 84% 4.9%);
+            --primary: hsl(200 98% 39%);
+            --primary-foreground: hsl(210 40% 98%);
+            --secondary: hsl(158 64% 52%);
+            --secondary-foreground: hsl(210 40% 98%);
+            --muted: hsl(210 40% 96%);
+            --muted-foreground: hsl(215.4 16.3% 46.9%);
+            --accent: hsl(24 95% 53%);
+            --accent-foreground: hsl(210 40% 98%);
+            --destructive: hsl(0 84.2% 60.2%);
+            --destructive-foreground: hsl(210 40% 98%);
+            --border: hsl(214.3 31.8% 91.4%);
+            --input: hsl(214.3 31.8% 91.4%);
+            --ring: hsl(200 98% 39%);
+            --chart-1: hsl(200 98% 39%);
+            --chart-2: hsl(158 64% 52%);
+            --chart-3: hsl(24 95% 53%);
+            --chart-4: hsl(47 96% 53%);
+            --chart-5: hsl(173 58% 39%);
+            --radius: 0.5rem;
+        }
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .three-js-container {
+            background: linear-gradient(135deg, #0EA5E9 0%, #059669 100%);
+            min-height: 400px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .sensor-reading {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        .credit-card-hover {
+            transition: all 0.3s ease;
+        }
+        
+        .credit-card-hover:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body class="bg-background text-foreground font-sans">
+    <!-- @COMPONENT: Navigation Header -->
+    <header class="bg-card border-b border-border">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-4">
+                    <!-- Blue Carbon Registry Logo placeholder -->
+                    <div class="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 text-primary-foreground" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"/>
+                        </svg>
+                    </div>
+                    <h1 class="text-xl font-bold text-primary">Blue Carbon Registry</h1>
+                </div>
+                
+                <nav class="hidden md:flex space-x-8">
+                    <a href="#dashboard" class="text-foreground hover:text-primary transition-colors">Dashboard</a>
+                    <a href="#projects" class="text-muted-foreground hover:text-primary transition-colors">Projects</a>
+                    <a href="#marketplace" class="text-muted-foreground hover:text-primary transition-colors">Marketplace</a>
+                    <a href="#wallet" class="text-muted-foreground hover:text-primary transition-colors">Wallet</a>
+                </nav>
+                
+                <div class="flex items-center space-x-4">
+                    <button class="bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90 transition-colors">
+                        Connect Wallet
+                    </button>
+                    <div class="w-8 h-8 bg-muted rounded-full"></div>
+                </div>
+            </div>
+        </div>
+    </header>
+    <!-- @END_COMPONENT: Navigation Header -->
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- @COMPONENT: Dashboard Overview -->
+        <section id="dashboard" class="mb-12">
+            <div class="mb-8">
+                <h2 class="text-3xl font-bold text-foreground mb-2">Carbon Credit Dashboard</h2>
+                <p class="text-muted-foreground">Monitor your blue carbon projects and track environmental impact in real-time</p>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div class="bg-card p-6 rounded-lg border border-border">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-muted-foreground">Total Projects</p>
+                            <p class="text-2xl font-bold text-foreground" data-bind="stats.totalProjects">12</p>
+                        </div>
+                        <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+                            <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-card p-6 rounded-lg border border-border">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-muted-foreground">Credits Issued</p>
+                            <p class="text-2xl font-bold text-foreground" data-bind="stats.creditsIssued">2,847</p>
+                        </div>
+                        <div class="w-12 h-12 bg-secondary/10 rounded-lg flex items-center justify-center">
+                            <svg class="w-6 h-6 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-card p-6 rounded-lg border border-border">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-muted-foreground">CO₂ Sequestered</p>
+                            <p class="text-2xl font-bold text-foreground" data-bind="stats.co2Sequestered">156.7 <span class="text-sm font-normal">tons</span></p>
+                        </div>
+                        <div class="w-12 h-12 bg-chart-3/10 rounded-lg flex items-center justify-center">
+                            <svg class="w-6 h-6 text-chart-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-card p-6 rounded-lg border border-border">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-muted-foreground">Market Value</p>
+                            <p class="text-2xl font-bold text-foreground" data-bind="stats.marketValue">$42,350</p>
+                        </div>
+                        <div class="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center">
+                            <svg class="w-6 h-6 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3D Project Map and Sensor Data -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                <!-- @COMPONENT: 3D Project Map -->
+                <div class="bg-card rounded-lg border border-border overflow-hidden">
+                    <div class="p-6 border-b border-border">
+                        <h3 class="text-lg font-semibold text-foreground">Global Project Map</h3>
+                        <p class="text-sm text-muted-foreground">Interactive 3D visualization of blue carbon projects</p>
+                    </div>
+                    <div class="three-js-container relative" id="projectMap">
+                        <!-- @FUNCTIONALITY: This should implement Three.js 3D globe with project markers -->
+                        <div class="absolute inset-0 flex items-center justify-center">
+                            <div class="text-center text-white">
+                                <div class="w-16 h-16 mx-auto mb-4 bg-white/20 rounded-full flex items-center justify-center">
+                                    <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M10 2L3 7v11h4v-6h6v6h4V7l-7-5z"/>
+                                    </svg>
+                                </div>
+                                <p class="text-lg font-medium">3D Globe Loading...</p>
+                                <p class="text-sm opacity-80">Interactive project visualization</p>
+                            </div>
+                        </div>
+                        <!-- Floating project markers would be rendered here by Three.js -->
+                        <div class="absolute top-4 right-4 bg-white/90 backdrop-blur-sm rounded-lg p-3">
+                            <div class="flex items-center space-x-2 mb-2">
+                                <div class="w-3 h-3 bg-primary rounded-full"></div>
+                                <span class="text-xs text-foreground">Active Projects</span>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <div class="w-3 h-3 bg-secondary rounded-full"></div>
+                                <span class="text-xs text-foreground">Completed Projects</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- @END_COMPONENT: 3D Project Map -->
+
+                <!-- Real-time Sensor Data -->
+                <div class="bg-card rounded-lg border border-border">
+                    <div class="p-6 border-b border-border">
+                        <h3 class="text-lg font-semibold text-foreground">Live Sensor Readings</h3>
+                        <p class="text-sm text-muted-foreground">Real-time IoT data from project sites</p>
+                    </div>
+                    <div class="p-6">
+                        <div class="space-y-6">
+                            <div class="sensor-reading">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-sm font-medium text-foreground">CO₂ Sequestration Rate</span>
+                                    <span class="text-sm text-secondary font-semibold" data-bind="sensors.co2Rate">2.3 t/ha/yr</span>
+                                </div>
+                                <div class="w-full bg-muted rounded-full h-2">
+                                    <div class="bg-secondary h-2 rounded-full" style="width: 78%"></div>
+                                </div>
+                            </div>
+
+                            <div class="sensor-reading">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-sm font-medium text-foreground">Biomass Growth</span>
+                                    <span class="text-sm text-primary font-semibold" data-bind="sensors.biomass">145.6 t/ha</span>
+                                </div>
+                                <div class="w-full bg-muted rounded-full h-2">
+                                    <div class="bg-primary h-2 rounded-full" style="width: 82%"></div>
+                                </div>
+                            </div>
+
+                            <div class="sensor-reading">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-sm font-medium text-foreground">Soil Carbon Content</span>
+                                    <span class="text-sm text-chart-3 font-semibold" data-bind="sensors.soilCarbon">89.2%</span>
+                                </div>
+                                <div class="w-full bg-muted rounded-full h-2">
+                                    <div class="bg-chart-3 h-2 rounded-full" style="width: 89%"></div>
+                                </div>
+                            </div>
+
+                            <div class="bg-muted/50 rounded-lg p-4 mt-4">
+                                <div class="flex items-center space-x-2 mb-2">
+                                    <div class="w-2 h-2 bg-secondary rounded-full animate-pulse"></div>
+                                    <span class="text-xs text-muted-foreground">Last updated: 2 minutes ago</span>
+                                </div>
+                                <p class="text-xs text-muted-foreground">Next reading: 8 minutes</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <!-- @END_COMPONENT: Dashboard Overview -->
+
+        <!-- @COMPONENT: Project Registration -->
+        <section id="projects" class="mb-12">
+            <div class="bg-card rounded-lg border border-border">
+                <div class="p-6 border-b border-border">
+                    <h3 class="text-xl font-semibold text-foreground mb-2">Register New Blue Carbon Project</h3>
+                    <p class="text-muted-foreground">Submit your mangrove restoration, seagrass bed, or salt marsh project for verification</p>
+                </div>
+                
+                <div class="p-6">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <!-- Project Details Form -->
+                        <div class="space-y-6">
+                            <div>
+                                <label class="block text-sm font-medium text-foreground mb-2">Project Name</label>
+                                <input type="text" class="w-full px-3 py-2 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground" placeholder="e.g., Coastal Mangrove Restoration - Tamil Nadu">
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-foreground mb-2">Project Type</label>
+                                    <select class="w-full px-3 py-2 border border-input rounded-md bg-background text-foreground">
+                                        <option>Mangrove Restoration</option>
+                                        <option>Seagrass Conservation</option>
+                                        <option>Salt Marsh Protection</option>
+                                        <option>Tidal Wetland Enhancement</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-foreground mb-2">Area (hectares)</label>
+                                    <input type="number" class="w-full px-3 py-2 border border-input rounded-md bg-background text-foreground" placeholder="250">
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-foreground mb-2">Latitude</label>
+                                    <input type="number" step="any" class="w-full px-3 py-2 border border-input rounded-md bg-background text-foreground" placeholder="11.0168">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-foreground mb-2">Longitude</label>
+                                    <input type="number" step="any" class="w-full px-3 py-2 border border-input rounded-md bg-background text-foreground" placeholder="76.9558">
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-foreground mb-2">Project Description</label>
+                                <textarea rows="4" class="w-full px-3 py-2 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground" placeholder="Describe the project goals, methodology, and expected carbon sequestration outcomes..."></textarea>
+                            </div>
+                        </div>
+
+                        <!-- Satellite Imagery Upload -->
+                        <div class="space-y-6">
+                            <div>
+                                <h4 class="text-lg font-medium text-foreground mb-4">Satellite Imagery</h4>
+                                
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-foreground mb-2">Before Image</label>
+                                        <div class="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-primary transition-colors cursor-pointer">
+                                            <!-- A degraded coastal area before restoration with sparse vegetation -->
+                                            <img src="https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=250" alt="Before restoration satellite view" class="w-full h-32 object-cover rounded-md mb-2" data-mock-image="true" data-implementation="Replace with satellite imagery upload component">
+                                            <p class="text-xs text-muted-foreground">Upload satellite image</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="block text-sm font-medium text-foreground mb-2">After Image</label>
+                                        <div class="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-primary transition-colors cursor-pointer">
+                                            <!-- A thriving mangrove forest with dense green vegetation along coastline -->
+                                            <img src="https://pixabay.com/get/gc2be96b843fa3b9c8f4388174b76657acce01c728683d16d37749d66432e0186214d1edde9e17720c70b766e041b9cd56c73859362967d6910024f08c97636e5_1280.jpg" alt="After restoration satellite view" class="w-full h-32 object-cover rounded-md mb-2" data-mock-image="true" data-implementation="Replace with satellite imagery upload component">
+                                            <p class="text-xs text-muted-foreground">Upload satellite image</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <h4 class="text-lg font-medium text-foreground mb-4">Verification Documents</h4>
+                                <div class="space-y-3">
+                                    <label class="flex items-center space-x-3 cursor-pointer">
+                                        <input type="checkbox" class="rounded border-border text-primary focus:ring-primary">
+                                        <span class="text-sm text-foreground">Environmental Impact Assessment</span>
+                                    </label>
+                                    <label class="flex items-center space-x-3 cursor-pointer">
+                                        <input type="checkbox" class="rounded border-border text-primary focus:ring-primary">
+                                        <span class="text-sm text-foreground">Baseline Carbon Measurements</span>
+                                    </label>
+                                    <label class="flex items-center space-x-3 cursor-pointer">
+                                        <input type="checkbox" class="rounded border-border text-primary focus:ring-primary">
+                                        <span class="text-sm text-foreground">Local Community Agreements</span>
+                                    </label>
+                                    <label class="flex items-center space-x-3 cursor-pointer">
+                                        <input type="checkbox" class="rounded border-border text-primary focus:ring-primary">
+                                        <span class="text-sm text-foreground">Government Approvals</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <button class="w-full bg-primary text-primary-foreground py-3 rounded-md hover:bg-primary/90 transition-colors font-medium" data-event="click:handleProjectSubmit">
+                                Submit Project for Verification
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <!-- @END_COMPONENT: Project Registration -->
+
+        <!-- @COMPONENT: Carbon Credit Marketplace -->
+        <section id="marketplace" class="mb-12">
+            <div class="mb-8">
+                <h2 class="text-2xl font-bold text-foreground mb-2">Carbon Credit Marketplace</h2>
+                <p class="text-muted-foreground">Buy verified blue carbon credits to offset your carbon footprint</p>
+            </div>
+
+            <!-- Market Stats -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="bg-card p-6 rounded-lg border border-border text-center">
+                    <p class="text-3xl font-bold text-primary" data-bind="market.totalCredits">1,247</p>
+                    <p class="text-sm text-muted-foreground">Credits Available</p>
+                </div>
+                <div class="bg-card p-6 rounded-lg border border-border text-center">
+                    <p class="text-3xl font-bold text-secondary" data-bind="market.avgPrice">$18.50</p>
+                    <p class="text-sm text-muted-foreground">Average Price</p>
+                </div>
+                <div class="bg-card p-6 rounded-lg border border-border text-center">
+                    <p class="text-3xl font-bold text-chart-3" data-bind="market.totalTrades">89</p>
+                    <p class="text-sm text-muted-foreground">Total Transactions</p>
+                </div>
+            </div>
+
+            <!-- Available Credits -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- @MAP: creditListings.map(credit => ( -->
+                <div class="bg-card rounded-lg border border-border overflow-hidden credit-card-hover">
+                    <!-- A mangrove restoration project showing healthy green mangroves in coastal waters -->
+                    <img src="https://images.unsplash.com/photo-1583212292454-1fe6229603b7?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200" alt="Mangrove restoration project" class="w-full h-48 object-cover" data-mock-image="true">
+                    <div class="p-6">
+                        <div class="flex items-center justify-between mb-2">
+                            <h3 class="font-semibold text-foreground" data-bind="credit.projectName">Kerala Mangrove Conservation</h3>
+                            <span class="text-xs bg-secondary/10 text-secondary px-2 py-1 rounded-full" data-bind="credit.status">Verified</span>
+                        </div>
+                        <p class="text-sm text-muted-foreground mb-4" data-bind="credit.location">Kochi, Kerala, India</p>
+                        
+                        <div class="space-y-2 mb-4">
+                            <div class="flex justify-between text-sm">
+                                <span class="text-muted-foreground">Credits Available</span>
+                                <span class="font-medium" data-bind="credit.available">125</span>
+                            </div>
+                            <div class="flex justify-between text-sm">
+                                <span class="text-muted-foreground">Price per Credit</span>
+                                <span class="font-medium" data-bind="credit.price">$17.50</span>
+                            </div>
+                            <div class="flex justify-between text-sm">
+                                <span class="text-muted-foreground">CO₂ per Credit</span>
+                                <span class="font-medium" data-bind="credit.co2Amount">1 tonne</span>
+                            </div>
+                        </div>
+                        
+                        <button class="w-full bg-primary text-primary-foreground py-2 rounded-md hover:bg-primary/90 transition-colors" data-event="click:handlePurchase">
+                            Purchase Credits
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-card rounded-lg border border-border overflow-hidden credit-card-hover">
+                    <!-- A pristine seagrass bed underwater showing dense green marine vegetation -->
+                    <img src="https://images.unsplash.com/photo-1582967788606-a171c1080cb0?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200" alt="Seagrass conservation project" class="w-full h-48 object-cover" data-mock-image="true">
+                    <div class="p-6">
+                        <div class="flex items-center justify-between mb-2">
+                            <h3 class="font-semibold text-foreground" data-bind="credit.projectName">Goa Seagrass Protection</h3>
+                            <span class="text-xs bg-secondary/10 text-secondary px-2 py-1 rounded-full" data-bind="credit.status">Verified</span>
+                        </div>
+                        <p class="text-sm text-muted-foreground mb-4" data-bind="credit.location">Panaji, Goa, India</p>
+                        
+                        <div class="space-y-2 mb-4">
+                            <div class="flex justify-between text-sm">
+                                <span class="text-muted-foreground">Credits Available</span>
+                                <span class="font-medium" data-bind="credit.available">78</span>
+                            </div>
+                            <div class="flex justify-between text-sm">
+                                <span class="text-muted-foreground">Price per Credit</span>
+                                <span class="font-medium" data-bind="credit.price">$19.25</span>
+                            </div>
+                            <div class="flex justify-between text-sm">
+                                <span class="text-muted-foreground">CO₂ per Credit</span>
+                                <span class="font-medium" data-bind="credit.co2Amount">1 tonne</span>
+                            </div>
+                        </div>
+                        
+                        <button class="w-full bg-primary text-primary-foreground py-2 rounded-md hover:bg-primary/90 transition-colors" data-event="click:handlePurchase">
+                            Purchase Credits
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-card rounded-lg border border-border overflow-hidden credit-card-hover">
+                    <!-- A salt marsh ecosystem with tall grasses and waterways at sunset -->
+                    <img src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200" alt="Salt marsh restoration project" class="w-full h-48 object-cover" data-mock-image="true">
+                    <div class="p-6">
+                        <div class="flex items-center justify-between mb-2">
+                            <h3 class="font-semibold text-foreground" data-bind="credit.projectName">Sundarbans Salt Marsh</h3>
+                            <span class="text-xs bg-secondary/10 text-secondary px-2 py-1 rounded-full" data-bind="credit.status">Verified</span>
+                        </div>
+                        <p class="text-sm text-muted-foreground mb-4" data-bind="credit.location">West Bengal, India</p>
+                        
+                        <div class="space-y-2 mb-4">
+                            <div class="flex justify-between text-sm">
+                                <span class="text-muted-foreground">Credits Available</span>
+                                <span class="font-medium" data-bind="credit.available">203</span>
+                            </div>
+                            <div class="flex justify-between text-sm">
+                                <span class="text-muted-foreground">Price per Credit</span>
+                                <span class="font-medium" data-bind="credit.price">$16.75</span>
+                            </div>
+                            <div class="flex justify-between text-sm">
+                                <span class="text-muted-foreground">CO₂ per Credit</span>
+                                <span class="font-medium" data-bind="credit.co2Amount">1 tonne</span>
+                            </div>
+                        </div>
+                        
+                        <button class="w-full bg-primary text-primary-foreground py-2 rounded-md hover:bg-primary/90 transition-colors" data-event="click:handlePurchase">
+                            Purchase Credits
+                        </button>
+                    </div>
+                </div>
+                <!-- @END_MAP )) -->
+            </div>
+        </section>
+        <!-- @END_COMPONENT: Carbon Credit Marketplace -->
+
+        <!-- @COMPONENT: Wallet and Transaction Management -->
+        <section id="wallet" class="mb-12">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Wallet Overview -->
+                <div class="bg-card rounded-lg border border-border">
+                    <div class="p-6 border-b border-border">
+                        <h3 class="text-xl font-semibold text-foreground mb-2">Digital Wallet</h3>
+                        <p class="text-muted-foreground">Manage your carbon credits and blockchain transactions</p>
+                    </div>
+                    
+                    <div class="p-6">
+                        <div class="bg-gradient-to-r from-primary to-secondary p-6 rounded-lg text-white mb-6">
+                            <div class="flex justify-between items-start mb-4">
+                                <div>
+                                    <p class="text-sm opacity-80">Total Credits Owned</p>
+                                    <p class="text-3xl font-bold" data-bind="wallet.totalCredits">47</p>
+                                </div>
+                                <div class="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
+                                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4zM18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z"/>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-sm opacity-80">Estimated Value: <span data-bind="wallet.estimatedValue">$823.50</span></span>
+                                <span class="text-xs bg-white/20 px-2 py-1 rounded">Active</span>
+                            </div>
+                        </div>
+
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                                        <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"/>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium text-foreground">Kerala Mangrove</p>
+                                        <p class="text-sm text-muted-foreground">25 credits</p>
+                                    </div>
+                                </div>
+                                <button class="text-sm bg-accent text-accent-foreground px-3 py-1 rounded-md hover:bg-accent/90 transition-colors" data-event="click:handleRetire">
+                                    Retire
+                                </button>
+                            </div>
+
+                            <div class="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-10 h-10 bg-secondary/10 rounded-lg flex items-center justify-center">
+                                        <svg class="w-5 h-5 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"/>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium text-foreground">Goa Seagrass</p>
+                                        <p class="text-sm text-muted-foreground">15 credits</p>
+                                    </div>
+                                </div>
+                                <button class="text-sm bg-accent text-accent-foreground px-3 py-1 rounded-md hover:bg-accent/90 transition-colors" data-event="click:handleRetire">
+                                    Retire
+                                </button>
+                            </div>
+
+                            <div class="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-10 h-10 bg-chart-3/10 rounded-lg flex items-center justify-center">
+                                        <svg class="w-5 h-5 text-chart-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"/>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium text-foreground">Sundarbans Salt Marsh</p>
+                                        <p class="text-sm text-muted-foreground">7 credits</p>
+                                    </div>
+                                </div>
+                                <button class="text-sm bg-accent text-accent-foreground px-3 py-1 rounded-md hover:bg-accent/90 transition-colors" data-event="click:handleRetire">
+                                    Retire
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Transaction History -->
+                <div class="bg-card rounded-lg border border-border">
+                    <div class="p-6 border-b border-border">
+                        <h3 class="text-xl font-semibold text-foreground mb-2">Transaction History</h3>
+                        <p class="text-muted-foreground">View your blockchain transaction history</p>
+                    </div>
+                    
+                    <div class="p-6">
+                        <div class="space-y-4">
+                            <!-- @MAP: transactions.map(tx => ( -->
+                            <div class="flex items-center justify-between p-4 border border-border rounded-lg">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-10 h-10 bg-secondary/10 rounded-lg flex items-center justify-center">
+                                        <svg class="w-5 h-5 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium text-foreground" data-bind="tx.type">Purchase</p>
+                                        <p class="text-sm text-muted-foreground" data-bind="tx.project">Kerala Mangrove Conservation</p>
+                                        <p class="text-xs text-muted-foreground" data-bind="tx.timestamp">2 hours ago</p>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <p class="font-medium text-foreground" data-bind="tx.amount">+25 credits</p>
+                                    <a href="#" class="text-xs text-primary hover:underline" data-bind="tx.txHash">View on Explorer</a>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center justify-between p-4 border border-border rounded-lg">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-10 h-10 bg-accent/10 rounded-lg flex items-center justify-center">
+                                        <svg class="w-5 h-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium text-foreground" data-bind="tx.type">Retirement</p>
+                                        <p class="text-sm text-muted-foreground" data-bind="tx.project">Goa Seagrass Protection</p>
+                                        <p class="text-xs text-muted-foreground" data-bind="tx.timestamp">1 day ago</p>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <p class="font-medium text-foreground" data-bind="tx.amount">-10 credits</p>
+                                    <a href="#" class="text-xs text-primary hover:underline" data-bind="tx.txHash">View on Explorer</a>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center justify-between p-4 border border-border rounded-lg">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                                        <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v13m0-13V6a2 2 0 112 0v1.5m0 0L16 10m-4-2.5L10 10"/>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium text-foreground" data-bind="tx.type">Minting</p>
+                                        <p class="text-sm text-muted-foreground" data-bind="tx.project">Your Project Verification</p>
+                                        <p class="text-xs text-muted-foreground" data-bind="tx.timestamp">3 days ago</p>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <p class="font-medium text-foreground" data-bind="tx.amount">+50 credits</p>
+                                    <a href="#" class="text-xs text-primary hover:underline" data-bind="tx.txHash">View on Explorer</a>
+                                </div>
+                            </div>
+                            <!-- @END_MAP )) -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <!-- @END_COMPONENT: Wallet and Transaction Management -->
+
+        <!-- @COMPONENT: Carbon Sequestration Analytics -->
+        <section class="mb-12">
+            <div class="bg-card rounded-lg border border-border">
+                <div class="p-6 border-b border-border">
+                    <h3 class="text-xl font-semibold text-foreground mb-2">Carbon Sequestration Analytics</h3>
+                    <p class="text-muted-foreground">Track environmental impact across all projects</p>
+                </div>
+                
+                <div class="p-6">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <!-- Carbon Sequestration Chart -->
+                        <div>
+                            <h4 class="text-lg font-medium text-foreground mb-4">Monthly CO₂ Sequestration</h4>
+                            <div class="bg-muted/30 rounded-lg p-4" style="height: 300px;">
+                                <canvas id="carbonChart"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Project Performance -->
+                        <div>
+                            <h4 class="text-lg font-medium text-foreground mb-4">Project Performance Comparison</h4>
+                            <div class="space-y-4">
+                                <div class="bg-muted/30 rounded-lg p-4">
+                                    <div class="flex justify-between items-center mb-2">
+                                        <span class="text-sm font-medium text-foreground">Mangrove Projects</span>
+                                        <span class="text-sm text-secondary font-semibold">156.7 t CO₂</span>
+                                    </div>
+                                    <div class="w-full bg-muted rounded-full h-2">
+                                        <div class="bg-secondary h-2 rounded-full" style="width: 85%"></div>
+                                    </div>
+                                    <p class="text-xs text-muted-foreground mt-1">85% of target achieved</p>
+                                </div>
+
+                                <div class="bg-muted/30 rounded-lg p-4">
+                                    <div class="flex justify-between items-center mb-2">
+                                        <span class="text-sm font-medium text-foreground">Seagrass Projects</span>
+                                        <span class="text-sm text-primary font-semibold">92.3 t CO₂</span>
+                                    </div>
+                                    <div class="w-full bg-muted rounded-full h-2">
+                                        <div class="bg-primary h-2 rounded-full" style="width: 72%"></div>
+                                    </div>
+                                    <p class="text-xs text-muted-foreground mt-1">72% of target achieved</p>
+                                </div>
+
+                                <div class="bg-muted/30 rounded-lg p-4">
+                                    <div class="flex justify-between items-center mb-2">
+                                        <span class="text-sm font-medium text-foreground">Salt Marsh Projects</span>
+                                        <span class="text-sm text-chart-3 font-semibold">78.9 t CO₂</span>
+                                    </div>
+                                    <div class="w-full bg-muted rounded-full h-2">
+                                        <div class="bg-chart-3 h-2 rounded-full" style="width: 68%"></div>
+                                    </div>
+                                    <p class="text-xs text-muted-foreground mt-1">68% of target achieved</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <!-- @END_COMPONENT: Carbon Sequestration Analytics -->
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-card border-t border-border mt-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div>
+                    <div class="flex items-center space-x-2 mb-4">
+                        <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                            <svg class="w-5 h-5 text-primary-foreground" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"/>
+                            </svg>
+                        </div>
+                        <span class="font-bold text-primary">Blue Carbon Registry</span>
+                    </div>
+                    <p class="text-sm text-muted-foreground">Democratizing carbon credit verification through blockchain technology for blue carbon ecosystems.</p>
+                </div>
+                
+                <div>
+                    <h4 class="font-semibold text-foreground mb-4">Platform</h4>
+                    <ul class="space-y-2 text-sm text-muted-foreground">
+                        <li><a href="#" class="hover:text-primary transition-colors">Dashboard</a></li>
+                        <li><a href="#" class="hover:text-primary transition-colors">Register Project</a></li>
+                        <li><a href="#" class="hover:text-primary transition-colors">Marketplace</a></li>
+                        <li><a href="#" class="hover:text-primary transition-colors">Wallet</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h4 class="font-semibold text-foreground mb-4">Resources</h4>
+                    <ul class="space-y-2 text-sm text-muted-foreground">
+                        <li><a href="#" class="hover:text-primary transition-colors">Documentation</a></li>
+                        <li><a href="#" class="hover:text-primary transition-colors">API Reference</a></li>
+                        <li><a href="#" class="hover:text-primary transition-colors">Smart Contracts</a></li>
+                        <li><a href="#" class="hover:text-primary transition-colors">Support</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h4 class="font-semibold text-foreground mb-4">Community</h4>
+                    <ul class="space-y-2 text-sm text-muted-foreground">
+                        <li><a href="#" class="hover:text-primary transition-colors">GitHub</a></li>
+                        <li><a href="#" class="hover:text-primary transition-colors">Discord</a></li>
+                        <li><a href="#" class="hover:text-primary transition-colors">Twitter</a></li>
+                        <li><a href="#" class="hover:text-primary transition-colors">Blog</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="border-t border-border mt-8 pt-8 text-center">
+                <p class="text-sm text-muted-foreground">&copy; 2024 Blue Carbon Registry. Built for environmental impact through blockchain innovation.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // TODO: Implement Three.js 3D globe initialization
+        (function initializeThreeJS() {
+            const container = document.getElementById('projectMap');
+            if (container) {
+                // Three.js globe rendering would go here
+                console.log('Three.js initialization placeholder');
+            }
+        })();
+
+        // TODO: Initialize Chart.js for carbon sequestration analytics
+        (function initializeCharts() {
+            const ctx = document.getElementById('carbonChart');
+            if (ctx) {
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                        datasets: [{
+                            label: 'CO₂ Sequestered (tonnes)',
+                            data: [12, 19, 15, 25, 22, 30],
+                            borderColor: 'hsl(200 98% 39%)',
+                            backgroundColor: 'hsla(200 98% 39% / 0.1)',
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                grid: {
+                                    color: 'hsl(214.3 31.8% 91.4%)'
+                                }
+                            },
+                            x: {
+                                grid: {
+                                    color: 'hsl(214.3 31.8% 91.4%)'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        })();
+
+        // TODO: Implement wallet connection logic
+        (function walletIntegration() {
+            // Web3 wallet connection functionality would be implemented here
+            console.log('Wallet integration placeholder');
+        })();
+
+        // TODO: Implement smart contract interaction
+        (function blockchainIntegration() {
+            // Smart contract interaction logic would be implemented here
+            console.log('Blockchain integration placeholder');
+        })();
+
+        // TODO: Simulate real-time sensor data updates
+        (function sensorDataSimulation() {
+            // Real-time data updates would be implemented here
+            console.log('Sensor data simulation placeholder');
+        })();
+    </script>
+</body>
+</html>

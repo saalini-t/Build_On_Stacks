@@ -2,8 +2,36 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertProjectSchema, insertCarbonCreditSchema, insertTransactionSchema, insertSensorDataSchema } from "@shared/schema";
+import multer from "multer";
+import path from "path";
+import fs from "fs";
+import { fileURLToPath } from "url";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Create uploads directory if it doesn't exist
+  const __filename = fileURLToPath(import.meta.url);
+  const __dirname = path.dirname(__filename);
+  const uploadsDir = path.join(__dirname, '..', 'uploads');
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+  }
+
+  // Configure multer for file uploads
+  const upload = multer({
+    dest: uploadsDir,
+    limits: {
+      fileSize: 5 * 1024 * 1024, // 5MB limit
+    },
+    fileFilter: (req, file, cb) => {
+      // Allow only image files
+      if (file.mimetype.startsWith('image/')) {
+        cb(null, true);
+      } else {
+        cb(new Error('Only image files are allowed'));
+      }
+    }
+  });
+
   // Project routes
   app.get("/api/projects", async (req, res) => {
     try {
@@ -228,6 +256,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       res.status(500).json({ error: "Failed to mint tokens" });
+    }
+  });
+
+  // Image upload routes
+  app.post("/api/upload/image", upload.single('image'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: "No image file provided" });
+      }
+
+      // Generate a unique filename
+      const fileExtension = path.extname(req.file.originalname);
+      const uniqueFilename = `${Date.now()}-${Math.random().toString(36).substring(2)}${fileExtension}`;
+      const newFilePath = path.join(uploadsDir, uniqueFilename);
+
+      // Rename the file to the unique filename
+      fs.renameSync(req.file.path, newFilePath);
+
+      // Return the file information
+      res.json({
+        success: true,
+        filename: uniqueFilename,
+        originalName: req.file.originalname,
+        size: req.file.size,
+        mimetype: req.file.mimetype,
+        url: `/uploads/${uniqueFilename}`
+      });
+    } catch (error) {
+      console.error("Image upload error:", error);
+      res.status(500).json({ error: "Failed to upload image" });
+    }
+  });
+
+  // Serve uploaded images
+  app.use('/uploads', (req, res, next) => {
+    const filePath = path.join(uploadsDir, req.url);
+    if (fs.existsSync(filePath)) {
+      res.sendFile(filePath);
+    } else {
+      res.status(404).json({ error: "Image not found" });
     }
   });
 
